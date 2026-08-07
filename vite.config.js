@@ -12,6 +12,13 @@ export default defineConfig({
   server: {
     port: 5174,
     host: '0.0.0.0',
-    open: true
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'https://haonan.online',
+        changeOrigin: true,
+        secure: true
+      }
+    }
   }
 })

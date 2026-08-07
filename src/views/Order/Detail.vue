@@ -139,13 +139,31 @@ async function loadOrder() {
   loading.value = true
   
   try {
-    const response = await orderApi.getDetail(route.params.id)
+    console.log('🔍 请求订单详情，ID:', route.params.id)
     
-    if (response.success) {
-      order.value = response.data
+    // API 响应拦截器已经解包了 data
+    const data = await orderApi.getDetail(route.params.id)
+    
+    console.log('📦 收到订单详情:', data)
+    
+    // 直接使用返回的数据
+    order.value = {
+      orderNo: data.orderNo || data.orderNumber || '',
+      createTime: data.createTime || data.createdAt || '',
+      status: data.status || '',
+      payMethod: data.payMethod || data.paymentMethod || '',
+      userName: data.userName || data.customerName || '',
+      phone: data.phone || data.mobile || '',
+      address: data.address || data.deliveryAddress || '',
+      items: data.items || data.orderItems || [],
+      goodsAmount: data.goodsAmount || data.subtotal || 0,
+      deliveryFee: data.deliveryFee || data.shippingFee || 0,
+      totalAmount: data.totalAmount || data.total || 0
     }
+    
+    console.log('✅ 订单详情加载成功')
   } catch (error) {
-    console.error('加载订单详情失败:', error)
+    console.error('❌ 加载订单详情失败:', error)
     ElMessage.error('加载订单详情失败')
   } finally {
     loading.value = false

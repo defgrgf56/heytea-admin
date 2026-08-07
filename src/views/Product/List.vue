@@ -39,12 +39,25 @@
         
         <el-table-column label="商品图片" width="100">
           <template #default="{ row }">
-            <el-image
-              :src="row.image || row.imageUrl"
-              :preview-src-list="[row.image || row.imageUrl]"
-              fit="cover"
-              style="width: 60px; height: 60px; border-radius: 4px;"
-            />
+            <div class="image-cell">
+              <el-image
+                v-if="row.image || row.imageUrl"
+                :src="getProxyImageUrl(row.image || row.imageUrl)"
+                :preview-src-list="[getProxyImageUrl(row.image || row.imageUrl)]"
+                fit="cover"
+                style="width: 60px; height: 60px; border-radius: 4px;"
+                @error="handleImageError(row)"
+              >
+                <template #error>
+                  <div class="image-error">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
+              <div v-else class="no-image">
+                <el-icon><Picture /></el-icon>
+              </div>
+            </div>
           </template>
         </el-table-column>
         
@@ -126,10 +139,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Picture } from '@element-plus/icons-vue'
 import { productApi } from '@/api/product'
+import { getProxyImageUrl } from '@/utils/image'
 
 const router = useRouter()
 
@@ -153,6 +168,11 @@ onMounted(() => {
   loadData()
 })
 
+// 当页面被激活时（从添加/编辑页返回），重新加载数据
+onActivated(() => {
+  loadData()
+})
+
 // 加载数据
 async function loadData() {
   loading.value = true
@@ -164,15 +184,33 @@ async function loadData() {
       keyword: searchText.value
     }
     
-    const response = await productApi.getList(params)
+    console.log('🔍 请求商品列表，参数:', params)
     
-    if (response.success) {
-      tableData.value = response.data.list || response.data.items || []
-      total.value = response.data.total || 0
+    // API 响应拦截器已经解包了 data，这里直接使用
+    const data = await productApi.getList(params)
+    
+    console.log('📦 收到商品数据:', data)
+    
+    // 根据实际返回的数据结构解析
+    if (Array.isArray(data)) {
+      // 如果直接返回数组
+      tableData.value = data
+      total.value = data.length
+    } else if (data && typeof data === 'object') {
+      // 如果返回对象，尝试不同的字段名
+      tableData.value = data.list || data.items || data.products || []
+      total.value = data.total || data.count || 0
+    } else {
+      tableData.value = []
+      total.value = 0
     }
+    
+    console.log('✅ 解析后的表格数据:', tableData.value.length, '条')
   } catch (error) {
-    console.error('加载商品列表失败:', error)
+    console.error('❌ 加载商品列表失败:', error)
     ElMessage.error('加载商品列表失败')
+    tableData.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -241,6 +279,12 @@ function handleCurrentChange(val) {
   currentPage.value = val
   loadData()
 }
+
+// 图片加载错误处理
+function handleImageError(row) {
+  console.warn('⚠️ 图片加载失败:', row.image || row.imageUrl)
+  console.log('商品数据:', row)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -268,6 +312,21 @@ function handleCurrentChange(val) {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+  }
+  
+  .image-cell {
+    .image-error,
+    .no-image {
+      width: 60px;
+      height: 60px;
+      border-radius: 4px;
+      background-color: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c0c4cc;
+      font-size: 24px;
+    }
   }
 }
 </style>

@@ -205,28 +205,33 @@ onMounted(() => {
 async function loadStore() {
   try {
     loading.value = true
-    const response = await storeApi.getDetail(storeId.value)
     
-    if (response.success) {
-      const data = response.data
-      form.value = {
-        name: data.name || '',
-        image: data.image || '',
-        city: data.city || '',
-        district: data.district || '',
-        address: data.address || '',
-        latitude: data.latitude || '',
-        longitude: data.longitude || '',
-        phone: data.phone || '',
-        openTime: data.openTime || '09:00',
-        closeTime: data.closeTime || '22:00',
-        status: data.status || 'open',
-        features: data.features || '',
-        parking: data.parking || ''
-      }
+    console.log('🔍 请求门店详情，ID:', storeId.value)
+    
+    // API 响应拦截器已经解包了 data
+    const data = await storeApi.getDetail(storeId.value)
+    
+    console.log('📦 收到门店详情:', data)
+    
+    form.value = {
+      name: data.name || '',
+      image: data.image || '',
+      city: data.city || '',
+      district: data.district || '',
+      address: data.address || '',
+      latitude: data.latitude || '',
+      longitude: data.longitude || '',
+      phone: data.phone || '',
+      openTime: data.openTime || '09:00',
+      closeTime: data.closeTime || '22:00',
+      status: data.status || 'open',
+      features: data.features || '',
+      parking: data.parking || ''
     }
+    
+    console.log('✅ 门店详情加载成功')
   } catch (error) {
-    console.error('加载门店失败:', error)
+    console.error('❌ 加载门店失败:', error)
     ElMessage.error('加载门店失败')
   } finally {
     loading.value = false

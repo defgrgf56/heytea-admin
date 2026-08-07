@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://haonan.online
 // 创建 axios 实例
 const request = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,  // 增加到 30 秒
   headers: {
     'Content-Type': 'application/json'
   }
@@ -37,15 +37,16 @@ request.interceptors.response.use(
   response => {
     console.log('📥 API Response:', response.status, response.config.url)
     
-    const data = response.data
+    const result = response.data
     
     // 检查业务状态码
-    if (data.success === false) {
-      ElMessage.error(data.message || '请求失败')
-      return Promise.reject(new Error(data.message || '请求失败'))
+    if (result.success === false) {
+      ElMessage.error(result.message || '请求失败')
+      return Promise.reject(new Error(result.message || '请求失败'))
     }
     
-    return data
+    // 返回 data 字段（真正的业务数据）
+    return result.data
   },
   error => {
     console.error('❌ Response Error:', error)

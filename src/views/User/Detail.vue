@@ -286,14 +286,32 @@ async function loadUserDetail() {
   loading.value = true
   
   try {
-    const response = await userApi.getDetail(route.params.id)
+    console.log('🔍 请求用户详情，ID:', route.params.id)
     
-    if (response.success) {
-      user.value = response.data
-      addresses.value = response.data.addresses || []
+    // API 响应拦截器已经解包了 data
+    const data = await userApi.getDetail(route.params.id)
+    
+    console.log('📦 收到用户详情:', data)
+    
+    user.value = {
+      id: data.id || '',
+      username: data.username || '',
+      email: data.email || '',
+      phone: data.phone || data.mobile || '',
+      avatar: data.avatar || '',
+      gender: data.gender || '',
+      birthday: data.birthday || '',
+      status: data.status || 'active',
+      tags: data.tags || [],
+      createdAt: data.createdAt || data.createTime || '',
+      lastLoginAt: data.lastLoginAt || data.lastLoginTime || ''
     }
+    
+    addresses.value = data.addresses || []
+    
+    console.log('✅ 用户详情加载成功')
   } catch (error) {
-    console.error('加载用户详情失败:', error)
+    console.error('❌ 加载用户详情失败:', error)
     ElMessage.error('加载用户详情失败')
   } finally {
     loading.value = false
@@ -303,13 +321,16 @@ async function loadUserDetail() {
 // 加载消费统计
 async function loadUserStatistics() {
   try {
-    const response = await userApi.getUserStatistics(route.params.id)
+    const data = await userApi.getUserStatistics(route.params.id)
     
-    if (response.success) {
-      statistics.value = response.data
+    statistics.value = {
+      orderCount: data.orderCount || 0,
+      totalSpent: data.totalSpent || 0,
+      avgOrderAmount: data.avgOrderAmount || 0,
+      favoriteCount: data.favoriteCount || 0
     }
   } catch (error) {
-    console.error('加载消费统计失败:', error)
+    console.error('❌ 加载消费统计失败:', error)
   }
 }
 
@@ -323,14 +344,20 @@ async function loadOrders() {
       pageSize: ordersPageSize.value
     }
     
-    const response = await userApi.getUserOrders(route.params.id, params)
+    const data = await userApi.getUserOrders(route.params.id, params)
     
-    if (response.success) {
-      orders.value = response.data.list || response.data.items || []
-      ordersTotal.value = response.data.total || 0
+    if (Array.isArray(data)) {
+      orders.value = data
+      ordersTotal.value = data.length
+    } else if (data && typeof data === 'object') {
+      orders.value = data.list || data.items || data.orders || []
+      ordersTotal.value = data.total || 0
+    } else {
+      orders.value = []
+      ordersTotal.value = 0
     }
   } catch (error) {
-    console.error('加载订单历史失败:', error)
+    console.error('❌ 加载订单历史失败:', error)
     ElMessage.error('加载订单历史失败')
   } finally {
     ordersLoading.value = false

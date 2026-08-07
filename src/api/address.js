@@ -1,18 +1,19 @@
 import request from './request'
 
 /**
- * 收货地址管理 API
+ * 地址管理 API
  */
 export const addressApi = {
   /**
-   * 获取地址列表
+   * 获取地址分页列表
    * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.pageSize - 每页数量
-   * @param {string} params.keyword - 搜索关键词（用户名、手机号、地址）
-   * @param {string} params.userId - 用户 ID 筛选
-   * @param {string} params.province - 省份筛选
-   * @param {string} params.city - 城市筛选
+   * @param {number} [params.page] - 页码
+   * @param {number} [params.pageSize] - 每页数量
+   * @param {string} [params.keyword] - 搜索关键词
+   * @param {string} [params.userId] - 用户 ID
+   * @param {string} [params.province] - 省份
+   * @param {string} [params.city] - 城市
+   * @returns {Promise<Object>} 分页数据
    */
   async getList(params) {
     const response = await request.get('/admin/addresses', { params })
@@ -21,7 +22,8 @@ export const addressApi = {
 
   /**
    * 获取地址详情
-   * @param {string|number} id - 地址 ID
+   * @param {string} id - 地址 ID
+   * @returns {Promise<Object>} 地址详情
    */
   async getDetail(id) {
     const response = await request.get(`/admin/addresses/${id}`)
@@ -29,25 +31,17 @@ export const addressApi = {
   },
 
   /**
-   * 获取用户的地址列表
-   * @param {string|number} userId - 用户 ID
+   * 获取地址统计数据（地址数、用户数、默认地址数）
+   * @returns {Promise<Object>} 统计数据
    */
-  async getUserAddresses(userId) {
-    const response = await request.get(`/admin/users/${userId}/addresses`)
+  async getStatistics() {
+    const response = await request.get('/admin/addresses/statistics')
     return response
   },
 
   /**
-   * 删除地址
-   * @param {string|number} id - 地址 ID
-   */
-  async delete(id) {
-    const response = await request.delete(`/admin/addresses/${id}`)
-    return response
-  },
-
-  /**
-   * 获取省份列表
+   * 获取省份选项
+   * @returns {Promise<Array>} 省份列表
    */
   async getProvinces() {
     const response = await request.get('/admin/addresses/provinces')
@@ -55,8 +49,9 @@ export const addressApi = {
   },
 
   /**
-   * 获取城市列表
-   * @param {string} province - 省份
+   * 获取城市选项
+   * @param {string} province - 省份名称
+   * @returns {Promise<Array>} 城市列表
    */
   async getCities(province) {
     const response = await request.get('/admin/addresses/cities', {
@@ -66,8 +61,9 @@ export const addressApi = {
   },
 
   /**
-   * 获取区域列表
-   * @param {string} city - 城市
+   * 获取区县选项
+   * @param {string} city - 城市名称
+   * @returns {Promise<Array>} 区县列表
    */
   async getDistricts(city) {
     const response = await request.get('/admin/addresses/districts', {
@@ -77,18 +73,21 @@ export const addressApi = {
   },
 
   /**
-   * 获取地址统计
+   * 软删除地址
+   * @param {string} id - 地址 ID
+   * @returns {Promise<Object>}
    */
-  async getStatistics() {
-    const response = await request.get('/admin/addresses/statistics')
+  async delete(id) {
+    const response = await request.delete(`/admin/addresses/${id}`)
     return response
   },
 
   /**
-   * 导出地址数据
-   * @param {Object} params - 导出参数
+   * 导出地址 CSV
+   * @param {Object} params - 筛选参数（同 getList）
+   * @returns {Promise<Blob>} CSV 文件 Blob
    */
-  async exportAddresses(params) {
+  async export(params) {
     const response = await request.get('/admin/addresses/export', {
       params,
       responseType: 'blob'

@@ -160,15 +160,33 @@ async function loadData() {
       status: statusFilter.value
     }
     
-    const response = await orderApi.getList(params)
+    console.log('🔍 请求订单列表，参数:', params)
     
-    if (response.success) {
-      tableData.value = response.data.list || response.data.items || []
-      total.value = response.data.total || 0
+    // API 响应拦截器已经解包了 data，这里直接使用
+    const data = await orderApi.getList(params)
+    
+    console.log('📦 收到订单数据:', data)
+    
+    // 根据实际返回的数据结构解析
+    if (Array.isArray(data)) {
+      // 如果直接返回数组
+      tableData.value = data
+      total.value = data.length
+    } else if (data && typeof data === 'object') {
+      // 如果返回对象，尝试不同的字段名
+      tableData.value = data.list || data.items || data.orders || []
+      total.value = data.total || data.count || 0
+    } else {
+      tableData.value = []
+      total.value = 0
     }
+    
+    console.log('✅ 解析后的表格数据:', tableData.value.length, '条')
   } catch (error) {
-    console.error('加载订单列表失败:', error)
+    console.error('❌ 加载订单列表失败:', error)
     ElMessage.error('加载订单列表失败')
+    tableData.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }

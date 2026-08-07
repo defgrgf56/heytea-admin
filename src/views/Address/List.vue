@@ -231,15 +231,31 @@ async function loadData() {
       city: cityFilter.value
     }
     
-    const response = await addressApi.getList(params)
+    console.log('🔍 请求地址列表，参数:', params)
     
-    if (response.success) {
-      tableData.value = response.data.list || response.data.items || []
-      total.value = response.data.total || 0
+    // API 响应拦截器已经解包了 data
+    const data = await addressApi.getList(params)
+    
+    console.log('📦 收到地址数据:', data)
+    
+    // 根据实际返回的数据结构解析
+    if (Array.isArray(data)) {
+      tableData.value = data
+      total.value = data.length
+    } else if (data && typeof data === 'object') {
+      tableData.value = data.list || data.items || data.addresses || []
+      total.value = data.total || data.count || 0
+    } else {
+      tableData.value = []
+      total.value = 0
     }
+    
+    console.log('✅ 解析后的表格数据:', tableData.value.length, '条')
   } catch (error) {
-    console.error('加载地址列表失败:', error)
+    console.error('❌ 加载地址列表失败:', error)
     ElMessage.error('加载地址列表失败')
+    tableData.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -248,12 +264,10 @@ async function loadData() {
 // 加载省份列表
 async function loadProvinces() {
   try {
-    const response = await addressApi.getProvinces()
-    if (response.success) {
-      provinces.value = response.data || []
-    }
+    const data = await addressApi.getProvinces()
+    provinces.value = Array.isArray(data) ? data : (data.provinces || data.list || [])
   } catch (error) {
-    console.error('加载省份列表失败:', error)
+    console.error('❌ 加载省份列表失败:', error)
   }
 }
 
@@ -262,24 +276,20 @@ async function loadCities() {
   if (!provinceFilter.value) return
   
   try {
-    const response = await addressApi.getCities(provinceFilter.value)
-    if (response.success) {
-      cities.value = response.data || []
-    }
+    const data = await addressApi.getCities(provinceFilter.value)
+    cities.value = Array.isArray(data) ? data : (data.cities || data.list || [])
   } catch (error) {
-    console.error('加载城市列表失败:', error)
+    console.error('❌ 加载城市列表失败:', error)
   }
 }
 
 // 加载统计数据
 async function loadStatistics() {
   try {
-    const response = await addressApi.getStatistics()
-    if (response.success) {
-      statistics.value = response.data
-    }
+    const data = await addressApi.getStatistics()
+    statistics.value = data
   } catch (error) {
-    console.error('加载统计数据失败:', error)
+    console.error('❌ 加载统计数据失败:', error)
   }
 }
 
